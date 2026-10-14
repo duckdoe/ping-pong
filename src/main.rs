@@ -12,6 +12,18 @@ struct Pad {
     length: f32,
 }
 
+pub struct Conf {
+    pub window_title: String,
+    pub window_width: i32,
+    pub window_height: i32,
+    pub high_dpi: bool,
+    pub fullscreen: bool,
+    pub sample_count: i32,
+    pub window_resizable: bool,
+    pub icon: Option<Icon>,
+    pub platform: Platform,
+}
+
 impl Ball {
     pub fn new (size: f32, pos: Vec2) -> Self {
         Self {size, pos}
@@ -37,6 +49,19 @@ impl Pad {
     pub fn draw(&self) {
         draw_rectangle(self.pos.x, self.pos.y, self.thickness, self.length, WHITE);
     }
+}
+
+fn check_rects_collision(x1: f32, y1: f32, h1: f32, w1: f32,x2:f32, y2: f32, h2: f32, w2: f32) -> bool {
+    let l1 = x1;
+    let r1 = x1 + w1;
+    let t1 = y1;
+    let b1 = y1 + h1;
+    let l2 = x2;
+    let r2 = x2 + w2;
+    let t2 = y2;
+    let b2 = y2 + h2;
+
+    !(r2 < l1 || r1 < l2 || b1 < t2 || b2 < t1)
 }
 
 const BALL_SPEED: f32 = 10.0;
@@ -69,10 +94,12 @@ async fn main() {
 
         if ball.pos.x < 0.0 {
             score_2 += 1;
-            dx = -dx;
+            ball.pos.x = w/2.0 - 3.0 * BALL_SIZE;
         } else if ball.pos.x + ball.size >= w{
             score_1 += 1;
-            dx = -dx;
+            ball.pos.x = w/2.0 + 3.0 * BALL_SIZE;
+            ball.pos.y = h/2.0 + 3.0 * BALL_SIZE;
+
         }
         if ball.pos.y < 0.0 || (ball.pos.y + ball.size) >= h {
             dy = -dy;
@@ -104,16 +131,14 @@ async fn main() {
 
 
         // TODO: Handle Ball Collisions
-        if ball.pos.y >= pad1.pos.y
-            && ball.pos.y < pad1.pos.y + pad1.length
-            && ball.pos.x < pad1.pos.x + pad1.thickness
+        if check_rects_collision(ball.pos.x, ball.pos.y, ball.size, ball.size,
+                                 pad1.pos.x, pad1.pos.y, pad1.length, pad1.thickness)
         {
             dx = -dx;
         }
 
-        if ball.pos.y >= pad2.pos.y
-            && ball.pos.y < pad2.pos.y + pad2.length
-            && ball.pos.x + ball.size >= pad2.pos.x
+        if check_rects_collision(ball.pos.x, ball.pos.y, ball.size, ball.size,
+                                 pad2.pos.x, pad2.pos.y, pad2.length, pad2.thickness)
         {
             dx = -dx;
         }
